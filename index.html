@@ -1,0 +1,662 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Reality Check Calculator</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background: #0d0f14;
+      color: #fff;
+      min-height: 100vh;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    .container {
+      max-width: 640px;
+      margin: 0 auto;
+      padding: 40px 16px 60px;
+    }
+
+    /* Header */
+    .header { text-align: center; margin-bottom: 36px; }
+    .header h1 { font-size: 28px; font-weight: 700; letter-spacing: -0.5px; }
+    .header p { margin-top: 8px; font-size: 13px; color: rgba(255,255,255,0.38); }
+
+    /* Gender Toggle */
+    .gender-toggle {
+      display: flex;
+      background: rgba(255,255,255,0.05);
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 14px;
+      padding: 4px;
+      gap: 4px;
+      margin-bottom: 20px;
+    }
+    .gender-btn {
+      flex: 1;
+      padding: 10px;
+      border: none;
+      border-radius: 10px;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.2s, color 0.2s;
+      background: transparent;
+      color: rgba(255,255,255,0.38);
+    }
+    .gender-btn.active {
+      background: #6366f1;
+      color: #fff;
+    }
+
+    /* Filter Cards */
+    .filters { display: flex; flex-direction: column; gap: 10px; }
+    .card {
+      background: rgba(255,255,255,0.04);
+      border: 1px solid rgba(255,255,255,0.07);
+      border-radius: 14px;
+      padding: 16px;
+    }
+    .card-label {
+      font-size: 10px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      color: rgba(255,255,255,0.35);
+      margin-bottom: 12px;
+    }
+    .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+
+    /* Range Slider */
+    .slider-wrap { position: relative; height: 28px; display: flex; align-items: center; }
+    .slider-track {
+      position: absolute;
+      left: 0; right: 0;
+      height: 5px;
+      border-radius: 99px;
+      background: rgba(255,255,255,0.1);
+      pointer-events: none;
+    }
+    .slider-fill {
+      position: absolute;
+      height: 5px;
+      border-radius: 99px;
+      background: #6366f1;
+      pointer-events: none;
+    }
+    .slider-wrap input[type=range] {
+      position: absolute;
+      width: 100%;
+      background: transparent;
+      -webkit-appearance: none;
+      appearance: none;
+      pointer-events: all;
+      cursor: pointer;
+    }
+    .slider-wrap input[type=range]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      width: 18px; height: 18px;
+      border-radius: 50%;
+      background: #fff;
+      border: 2.5px solid #6366f1;
+      box-shadow: 0 1px 6px rgba(0,0,0,0.4);
+      cursor: grab;
+    }
+    .slider-wrap input[type=range]::-moz-range-thumb {
+      width: 18px; height: 18px;
+      border-radius: 50%;
+      background: #fff;
+      border: 2.5px solid #6366f1;
+      box-shadow: 0 1px 6px rgba(0,0,0,0.4);
+      cursor: grab;
+    }
+    #range-min { z-index: 3; }
+    #range-max { z-index: 4; }
+    .age-labels {
+      display: flex;
+      justify-content: space-between;
+      font-size: 13px;
+      color: rgba(255,255,255,0.5);
+      margin-top: 6px;
+    }
+
+    /* Select */
+    select {
+      width: 100%;
+      background: rgba(255,255,255,0.05);
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 10px;
+      padding: 10px 12px;
+      font-size: 13px;
+      color: #fff;
+      appearance: none;
+      -webkit-appearance: none;
+      cursor: pointer;
+      outline: none;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='rgba(255,255,255,0.3)' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: right 12px center;
+    }
+    select option { background: #1a1d27; color: #fff; }
+    select:focus { border-color: rgba(99,102,241,0.5); box-shadow: 0 0 0 2px rgba(99,102,241,0.15); }
+
+    /* Ethnicity Buttons */
+    .ethnicity-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 8px;
+    }
+    .eth-btn {
+      padding: 8px 4px;
+      border-radius: 8px;
+      border: 1px solid rgba(255,255,255,0.1);
+      background: transparent;
+      color: rgba(255,255,255,0.45);
+      font-size: 12px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: background 0.15s, color 0.15s, border-color 0.15s;
+    }
+    .eth-btn.active {
+      background: #6366f1;
+      border-color: #6366f1;
+      color: #fff;
+    }
+
+    /* Toggle */
+    .toggle-row { display: flex; align-items: center; justify-content: space-between; }
+    .toggle-label { font-size: 13px; color: rgba(255,255,255,0.5); }
+    .toggle {
+      position: relative;
+      width: 44px;
+      height: 24px;
+      cursor: pointer;
+    }
+    .toggle input { display: none; }
+    .toggle-track {
+      position: absolute;
+      inset: 0;
+      border-radius: 99px;
+      background: rgba(255,255,255,0.15);
+      transition: background 0.2s;
+    }
+    .toggle input:checked + .toggle-track { background: #6366f1; }
+    .toggle-thumb {
+      position: absolute;
+      top: 2px; left: 2px;
+      width: 20px; height: 20px;
+      border-radius: 50%;
+      background: #fff;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.3);
+      transition: transform 0.2s;
+    }
+    .toggle input:checked ~ .toggle-thumb { transform: translateX(20px); }
+
+    /* Calc Button */
+    .calc-btn {
+      width: 100%;
+      margin-top: 20px;
+      padding: 14px;
+      border: none;
+      border-radius: 14px;
+      background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+      color: #fff;
+      font-size: 14px;
+      font-weight: 700;
+      letter-spacing: 0.03em;
+      cursor: pointer;
+      box-shadow: 0 4px 24px rgba(99,102,241,0.35);
+      transition: transform 0.15s, box-shadow 0.15s;
+    }
+    .calc-btn:hover { box-shadow: 0 6px 28px rgba(99,102,241,0.45); }
+    .calc-btn:active { transform: scale(0.98); }
+
+    /* Result */
+    .result {
+      margin-top: 20px;
+      border-radius: 16px;
+      border: 1px solid rgba(99,102,241,0.25);
+      background: rgba(255,255,255,0.03);
+      padding: 24px;
+      display: none;
+    }
+    .result.visible { display: block; }
+    .result-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 16px;
+      margin-bottom: 20px;
+    }
+    .result-pct-label {
+      font-size: 10px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      color: rgba(255,255,255,0.35);
+      margin-bottom: 4px;
+    }
+    .result-pct {
+      font-size: 52px;
+      font-weight: 800;
+      line-height: 1;
+      font-variant-numeric: tabular-nums;
+      transition: color 0.3s;
+    }
+    .result-pct-sub { font-size: 11px; color: rgba(255,255,255,0.28); margin-top: 4px; }
+    .result-score-side { text-align: right; }
+    .result-score-icon { font-size: 38px; }
+    .result-score-name {
+      font-size: 13px;
+      font-weight: 700;
+      margin-top: 4px;
+      transition: color 0.3s;
+    }
+
+    /* Score Meter */
+    .meter { display: flex; gap: 6px; margin-bottom: 6px; }
+    .meter-seg {
+      flex: 1;
+      height: 10px;
+      border-radius: 4px;
+      background: rgba(255,255,255,0.08);
+      transition: background 0.4s;
+    }
+    .meter-ends {
+      display: flex;
+      justify-content: space-between;
+      font-size: 10px;
+      color: rgba(255,255,255,0.25);
+      margin-bottom: 16px;
+    }
+
+    .result-desc {
+      font-size: 13px;
+      color: rgba(255,255,255,0.45);
+      line-height: 1.6;
+      margin-bottom: 16px;
+    }
+    .result-footer {
+      padding-top: 14px;
+      border-top: 1px solid rgba(255,255,255,0.05);
+      font-size: 11px;
+      color: rgba(255,255,255,0.2);
+      line-height: 1.6;
+    }
+
+    /* Empty state */
+    .empty {
+      margin-top: 20px;
+      border-radius: 16px;
+      border: 1px solid rgba(255,255,255,0.05);
+      padding: 24px;
+      text-align: center;
+      font-size: 13px;
+      color: rgba(255,255,255,0.22);
+    }
+
+    /* Legend */
+    .legend { margin-top: 36px; padding-top: 20px; border-top: 1px solid rgba(255,255,255,0.05); }
+    .legend-title {
+      font-size: 10px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      color: rgba(255,255,255,0.28);
+      margin-bottom: 12px;
+    }
+    .legend-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+    .legend-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 12px;
+      color: rgba(255,255,255,0.32);
+    }
+    .legend-pct { margin-left: auto; color: rgba(255,255,255,0.18); font-size: 11px; }
+  </style>
+</head>
+<body>
+<div class="container">
+
+  <div class="header">
+    <h1>Reality Check Calculator</h1>
+    <p>Based on Census Bureau data. How realistic are your standards?</p>
+  </div>
+
+  <!-- Gender Toggle -->
+  <div class="gender-toggle">
+    <button class="gender-btn active" data-gender="male" onclick="setGender('male')">Looking for a Man</button>
+    <button class="gender-btn" data-gender="female" onclick="setGender('female')">Looking for a Woman</button>
+  </div>
+
+  <!-- Filters -->
+  <div class="filters">
+
+    <!-- Age Range -->
+    <div class="card">
+      <div class="card-label">Age Range</div>
+      <div class="slider-wrap">
+        <div class="slider-track"></div>
+        <div class="slider-fill" id="slider-fill"></div>
+        <input type="range" id="range-min" min="18" max="69" value="25" oninput="onRangeMin()" />
+        <input type="range" id="range-max" min="18" max="69" value="40" oninput="onRangeMax()" />
+      </div>
+      <div class="age-labels">
+        <span id="age-min-label">25 yrs</span>
+        <span id="age-max-label">40 yrs</span>
+      </div>
+    </div>
+
+    <!-- Height & Income -->
+    <div class="grid-2">
+      <div class="card">
+        <div class="card-label">Min. Height</div>
+        <select id="height-select" onchange="updateState()"></select>
+      </div>
+      <div class="card">
+        <div class="card-label">Min. Income</div>
+        <select id="income-select" onchange="updateState()">
+          <option value="0">No Minimum</option>
+          <option value="20000">$20,000</option>
+          <option value="30000">$30,000</option>
+          <option value="40000">$40,000</option>
+          <option value="50000">$50,000</option>
+          <option value="60000">$60,000</option>
+          <option value="75000">$75,000</option>
+          <option value="100000">$100,000</option>
+          <option value="125000">$125,000</option>
+          <option value="150000">$150,000</option>
+          <option value="175000">$175,000</option>
+          <option value="200000">$200,000</option>
+          <option value="250000">$250,000</option>
+          <option value="300000">$300,000</option>
+          <option value="400000">$400,000</option>
+          <option value="500000">$500,000+</option>
+        </select>
+      </div>
+    </div>
+
+    <!-- Ethnicity -->
+    <div class="card">
+      <div class="card-label">Ethnicity</div>
+      <div class="ethnicity-grid">
+        <button class="eth-btn active" data-race="any" onclick="setRace('any')">Any</button>
+        <button class="eth-btn" data-race="white" onclick="setRace('white')">White</button>
+        <button class="eth-btn" data-race="hispanic" onclick="setRace('hispanic')">Hispanic / Latino</button>
+        <button class="eth-btn" data-race="black" onclick="setRace('black')">Black / African American</button>
+        <button class="eth-btn" data-race="asian" onclick="setRace('asian')">Asian</button>
+        <button class="eth-btn" data-race="other" onclick="setRace('other')">Other</button>
+      </div>
+    </div>
+
+    <!-- Exclude toggles -->
+    <div class="grid-2">
+      <div class="card">
+        <div class="card-label">Exclude Married</div>
+        <div class="toggle-row">
+          <span class="toggle-label" id="married-label">No</span>
+          <label class="toggle">
+            <input type="checkbox" id="toggle-married" onchange="onToggle('married')" />
+            <div class="toggle-track"></div>
+            <div class="toggle-thumb"></div>
+          </label>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-label">Exclude Obese</div>
+        <div class="toggle-row">
+          <span class="toggle-label" id="obese-label">No</span>
+          <label class="toggle">
+            <input type="checkbox" id="toggle-obese" onchange="onToggle('obese')" />
+            <div class="toggle-track"></div>
+            <div class="toggle-thumb"></div>
+          </label>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /filters -->
+
+  <button class="calc-btn" onclick="calculate()">Calculate My Reality</button>
+
+  <!-- Result -->
+  <div class="result" id="result">
+    <div class="result-top">
+      <div>
+        <div class="result-pct-label">Match Probability</div>
+        <div class="result-pct" id="result-pct">—</div>
+        <div class="result-pct-sub" id="result-sub">of the US population meets your criteria</div>
+      </div>
+      <div class="result-score-side">
+        <div class="result-pct-label">Delusion Score</div>
+        <div class="result-score-icon" id="result-icon">—</div>
+        <div class="result-score-name" id="result-name">—</div>
+      </div>
+    </div>
+    <div class="meter" id="meter">
+      <div class="meter-seg" id="seg0"></div>
+      <div class="meter-seg" id="seg1"></div>
+      <div class="meter-seg" id="seg2"></div>
+      <div class="meter-seg" id="seg3"></div>
+      <div class="meter-seg" id="seg4"></div>
+    </div>
+    <div class="meter-ends"><span>Realistic</span><span>Delusional</span></div>
+    <div class="result-desc" id="result-desc"></div>
+    <div class="result-footer" id="result-footer"></div>
+  </div>
+
+  <div class="empty" id="empty">
+    Set your preferences above and hit Calculate to see your reality check.
+  </div>
+
+  <!-- Legend -->
+  <div class="legend">
+    <div class="legend-title">Score Legend</div>
+    <div class="legend-grid">
+      <div class="legend-item">🌱 <span>0/5 — Down to Earth</span><span class="legend-pct">&gt;30%</span></div>
+      <div class="legend-item">✅ <span>1/5 — Optimistic</span><span class="legend-pct">20–30%</span></div>
+      <div class="legend-item">🟡 <span>2/5 — Selective</span><span class="legend-pct">10–20%</span></div>
+      <div class="legend-item">🟠 <span>3/5 — Picky</span><span class="legend-pct">5–10%</span></div>
+      <div class="legend-item">🔴 <span>4/5 — Delusional</span><span class="legend-pct">1–5%</span></div>
+      <div class="legend-item">💀 <span>5/5 — Fantasy Mode</span><span class="legend-pct">&lt;1%</span></div>
+    </div>
+  </div>
+
+</div><!-- /container -->
+
+<script>
+// ─── DATA ────────────────────────────────────────────────────────────────────
+
+const MALE_HEIGHT = {60:1,61:.99,62:.97,63:.93,64:.88,65:.8,66:.7,67:.57,68:.44,69:.32,70:.21,71:.13,72:.075,73:.038,74:.016,75:.006,76:.002,77:.0005};
+const FEMALE_HEIGHT = {56:1,57:.99,58:.97,59:.93,60:.86,61:.76,62:.63,63:.5,64:.37,65:.25,66:.15,67:.08,68:.038,69:.015,70:.005,71:.001};
+
+const MALE_INCOME = [[0,1],[20000,.82],[30000,.68],[40000,.56],[50000,.46],[60000,.37],[70000,.3],[80000,.24],[100000,.18],[125000,.12],[150000,.08],[175000,.055],[200000,.038],[250000,.022],[300000,.013],[400000,.006],[500000,.003]];
+const FEMALE_INCOME = [[0,1],[20000,.72],[30000,.57],[40000,.44],[50000,.34],[60000,.26],[70000,.2],[80000,.15],[100000,.09],[125000,.055],[150000,.032],[175000,.02],[200000,.013],[250000,.007],[300000,.004],[400000,.002],[500000,.001]];
+
+const RACE_FRACS = {any:1,white:.595,hispanic:.185,black:.134,asian:.061,other:.025};
+
+const AGE_DIST = {};
+for(let a=18;a<=69;a++) AGE_DIST[a] = a<=39 ? 0.011 : a<=54 ? 0.01 : a<=64 ? 0.009 : 0.008;
+
+const HEIGHT_OPTS_MALE = [
+  {l:"5'0\"",v:60},{l:"5'1\"",v:61},{l:"5'2\"",v:62},{l:"5'3\"",v:63},{l:"5'4\"",v:64},
+  {l:"5'5\"",v:65},{l:"5'6\"",v:66},{l:"5'7\"",v:67},{l:"5'8\"",v:68},{l:"5'9\"",v:69},
+  {l:"5'10\"",v:70},{l:"5'11\"",v:71},{l:"6'0\"",v:72},{l:"6'1\"",v:73},{l:"6'2\"",v:74},{l:"6'3\"",v:75},{l:"6'4\"",v:76}
+];
+const HEIGHT_OPTS_FEMALE = [
+  {l:"4'8\"",v:56},{l:"4'9\"",v:57},{l:"4'10\"",v:58},{l:"4'11\"",v:59},{l:"5'0\"",v:60},
+  {l:"5'1\"",v:61},{l:"5'2\"",v:62},{l:"5'3\"",v:63},{l:"5'4\"",v:64},{l:"5'5\"",v:65},
+  {l:"5'6\"",v:66},{l:"5'7\"",v:67},{l:"5'8\"",v:68},{l:"5'9\"",v:69},{l:"5'10\"",v:70}
+];
+
+const TIERS = [
+  {t:.3,  score:0, icon:"🌱", label:"Down to Earth",  color:"#22c55e", desc:"Your standards are grounded and realistic. Most people in this range find what they're looking for."},
+  {t:.2,  score:1, icon:"✅", label:"Optimistic",      color:"#84cc16", desc:"You have some standards that narrow the field, but plenty of matches exist if you stay open."},
+  {t:.1,  score:2, icon:"🟡", label:"Selective",       color:"#eab308", desc:"You know what you want. The pool is smaller, but these people are out there."},
+  {t:.05, score:3, icon:"🟠", label:"Picky",           color:"#f97316", desc:"Your ideal match is in a small percentage of the population. Expect a longer search."},
+  {t:.01, score:4, icon:"🔴", label:"Delusional",      color:"#ef4444", desc:"You're searching for a needle in a haystack. Consider relaxing a standard or two."},
+  {t:0,   score:5, icon:"💀", label:"Fantasy Mode",    color:"#dc2626", desc:"This person statistically barely exists. You may be waiting a very long time."},
+];
+
+// ─── STATE ───────────────────────────────────────────────────────────────────
+let gender = "male";
+let race = "any";
+let ageMin = 25, ageMax = 40;
+
+// ─── INIT ────────────────────────────────────────────────────────────────────
+function init() {
+  buildHeightSelect();
+  updateSliderFill();
+}
+
+function buildHeightSelect() {
+  const sel = document.getElementById("height-select");
+  const opts = gender === "male" ? HEIGHT_OPTS_MALE : HEIGHT_OPTS_FEMALE;
+  const prev = sel.value ? parseInt(sel.value) : null;
+  sel.innerHTML = "";
+  opts.forEach(o => {
+    const opt = document.createElement("option");
+    opt.value = o.v;
+    opt.textContent = o.l;
+    sel.appendChild(opt);
+  });
+  if (prev && opts.find(o => o.v === prev)) sel.value = prev;
+}
+
+// ─── CONTROLS ────────────────────────────────────────────────────────────────
+function setGender(g) {
+  gender = g;
+  document.querySelectorAll(".gender-btn").forEach(b =>
+    b.classList.toggle("active", b.dataset.gender === g)
+  );
+  buildHeightSelect();
+  document.getElementById("result").classList.remove("visible");
+  document.getElementById("empty").style.display = "";
+}
+
+function setRace(r) {
+  race = r;
+  document.querySelectorAll(".eth-btn").forEach(b =>
+    b.classList.toggle("active", b.dataset.race === r)
+  );
+}
+
+function onRangeMin() {
+  const min = document.getElementById("range-min");
+  const max = document.getElementById("range-max");
+  if (parseInt(min.value) >= parseInt(max.value)) min.value = parseInt(max.value) - 1;
+  ageMin = parseInt(min.value);
+  document.getElementById("age-min-label").textContent = ageMin + " yrs";
+  updateSliderFill();
+}
+
+function onRangeMax() {
+  const min = document.getElementById("range-min");
+  const max = document.getElementById("range-max");
+  if (parseInt(max.value) <= parseInt(min.value)) max.value = parseInt(min.value) + 1;
+  ageMax = parseInt(max.value);
+  document.getElementById("age-max-label").textContent = ageMax + " yrs";
+  updateSliderFill();
+}
+
+function updateSliderFill() {
+  const total = 69 - 18;
+  const left = ((ageMin - 18) / total) * 100;
+  const right = 100 - ((ageMax - 18) / total) * 100;
+  document.getElementById("slider-fill").style.left = left + "%";
+  document.getElementById("slider-fill").style.right = right + "%";
+}
+
+function onToggle(which) {
+  const checked = document.getElementById("toggle-" + which).checked;
+  document.getElementById(which + "-label").textContent = checked ? "Yes" : "No";
+}
+
+function updateState() {}
+
+// ─── CALCULATOR ───────────────────────────────────────────────────────────────
+function interpolateCumulative(table, v) {
+  const keys = Object.keys(table).map(Number).sort((a,b)=>a-b);
+  if (v <= keys[0]) return table[keys[0]];
+  if (v >= keys[keys.length-1]) return table[keys[keys.length-1]];
+  for (let i = 0; i < keys.length-1; i++) {
+    if (v >= keys[i] && v <= keys[i+1]) {
+      const t = (v - keys[i]) / (keys[i+1] - keys[i]);
+      return table[keys[i]] + t * (table[keys[i+1]] - table[keys[i]]);
+    }
+  }
+  return 1;
+}
+
+function interpolateIncome(brackets, income) {
+  if (income <= 0) return 1;
+  for (let i = 0; i < brackets.length-1; i++) {
+    const [lo, fLo] = brackets[i], [hi, fHi] = brackets[i+1];
+    if (income >= lo && income <= hi) {
+      const t = (income - lo) / (hi - lo);
+      return fLo + t * (fHi - fLo);
+    }
+  }
+  return brackets[brackets.length-1][1];
+}
+
+function getAgeFraction(min, max) {
+  const all = Object.keys(AGE_DIST).map(Number);
+  const total = all.filter(a=>a>=18&&a<=69).reduce((s,a)=>s+AGE_DIST[a],0);
+  const sel = all.filter(a=>a>=min&&a<=max).reduce((s,a)=>s+(AGE_DIST[a]||0),0);
+  return total > 0 ? sel / total : 1;
+}
+
+function calculate() {
+  const heightInches = parseInt(document.getElementById("height-select").value);
+  const income = parseInt(document.getElementById("income-select").value);
+  const excludeMarried = document.getElementById("toggle-married").checked;
+  const excludeObese = document.getElementById("toggle-obese").checked;
+
+  let p = 1;
+  p *= getAgeFraction(ageMin, ageMax);
+  p *= interpolateCumulative(gender === "male" ? MALE_HEIGHT : FEMALE_HEIGHT, heightInches);
+  p *= interpolateIncome(gender === "male" ? MALE_INCOME : FEMALE_INCOME, income);
+  p *= (RACE_FRACS[race] || 1);
+  if (excludeMarried) p *= (gender === "male" ? 0.505 : 0.525);
+  if (excludeObese)   p *= (gender === "male" ? 0.567 : 0.584);
+  p = Math.max(0, Math.min(1, p));
+
+  const tier = TIERS.find(t => p >= t.t) || TIERS[TIERS.length-1];
+
+  const pct = p < 0.001 ? (p*100).toFixed(3) : p < 0.01 ? (p*100).toFixed(2) : (p*100).toFixed(1);
+
+  // Update result panel
+  const resultEl = document.getElementById("result");
+  resultEl.style.borderColor = tier.color + "40";
+
+  document.getElementById("result-pct").textContent = pct + "%";
+  document.getElementById("result-pct").style.color = tier.color;
+  document.getElementById("result-sub").textContent =
+    "of the " + (gender === "male" ? "male" : "female") + " population meets your criteria";
+  document.getElementById("result-icon").textContent = tier.icon;
+  document.getElementById("result-name").textContent = tier.label;
+  document.getElementById("result-name").style.color = tier.color;
+  document.getElementById("result-desc").textContent = tier.desc;
+  document.getElementById("result-footer").textContent =
+    "Data sourced from Census Bureau. All figures represent the adult population ages " +
+    ageMin + "–" + ageMax + ". This is a statistical exercise, not a judgment.";
+
+  for (let i = 0; i < 5; i++) {
+    document.getElementById("seg" + i).style.background =
+      i < tier.score ? tier.color : "rgba(255,255,255,0.08)";
+  }
+
+  resultEl.classList.add("visible");
+  document.getElementById("empty").style.display = "none";
+}
+
+init();
+</script>
+</body>
+</html>
