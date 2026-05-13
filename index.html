@@ -343,12 +343,12 @@
       <div class="slider-wrap">
         <div class="slider-track"></div>
         <div class="slider-fill" id="slider-fill"></div>
-        <input type="range" id="range-min" min="18" max="69" value="25" oninput="onRangeMin()" />
-        <input type="range" id="range-max" min="18" max="69" value="40" oninput="onRangeMax()" />
+        <input type="range" id="range-min" min="18" max="70" value="18" oninput="onRangeMin()" />
+        <input type="range" id="range-max" min="18" max="70" value="70" oninput="onRangeMax()" />
       </div>
       <div class="age-labels">
-        <span id="age-min-label">25 yrs</span>
-        <span id="age-max-label">40 yrs</span>
+        <span id="age-min-label">18 yrs</span>
+        <span id="age-max-label">70 yrs</span>
       </div>
     </div>
 
@@ -481,7 +481,7 @@ const FEMALE_INCOME = [[0,1],[20000,.72],[30000,.57],[40000,.44],[50000,.34],[60
 const RACE_FRACS = {any:1,white:.595,hispanic:.185,black:.134,asian:.061,other:.025};
 
 const AGE_DIST = {};
-for(let a=18;a<=69;a++) AGE_DIST[a] = a<=39 ? 0.011 : a<=54 ? 0.01 : a<=64 ? 0.009 : 0.008;
+for(let a=18;a<=70;a++) AGE_DIST[a] = a<=39 ? 0.011 : a<=54 ? 0.01 : a<=64 ? 0.009 : 0.008;
 
 const HEIGHT_OPTS_MALE = [
   {l:"5'0\"",v:60},{l:"5'1\"",v:61},{l:"5'2\"",v:62},{l:"5'3\"",v:63},{l:"5'4\"",v:64},
@@ -506,7 +506,7 @@ const TIERS = [
 // ─── STATE ───────────────────────────────────────────────────────────────────
 let gender = "male";
 let race = "any";
-let ageMin = 25, ageMax = 40;
+let ageMin = 18, ageMax = 70;
 
 // ─── INIT ────────────────────────────────────────────────────────────────────
 function init() {
@@ -565,7 +565,7 @@ function onRangeMax() {
 }
 
 function updateSliderFill() {
-  const total = 69 - 18;
+  const total = 70 - 18;
   const left = ((ageMin - 18) / total) * 100;
   const right = 100 - ((ageMax - 18) / total) * 100;
   document.getElementById("slider-fill").style.left = left + "%";
@@ -607,7 +607,7 @@ function interpolateIncome(brackets, income) {
 
 function getAgeFraction(min, max) {
   const all = Object.keys(AGE_DIST).map(Number);
-  const total = all.filter(a=>a>=18&&a<=69).reduce((s,a)=>s+AGE_DIST[a],0);
+  const total = all.filter(a=>a>=18&&a<=70).reduce((s,a)=>s+AGE_DIST[a],0);
   const sel = all.filter(a=>a>=min&&a<=max).reduce((s,a)=>s+(AGE_DIST[a]||0),0);
   return total > 0 ? sel / total : 1;
 }
