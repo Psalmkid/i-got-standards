@@ -325,7 +325,7 @@
 
   <div class="header">
     <h1>Reality Check Calculator</h1>
-    <p>Based on Census Bureau data. How realistic are your standards?</p>
+    <p>Based on localized Nigeria demographic stats. How realistic are your standards?</p>
   </div>
 
   <!-- Gender Toggle -->
@@ -361,22 +361,14 @@
       <div class="card">
         <div class="card-label">Min. Income</div>
         <select id="income-select" onchange="updateState()">
-          <option value="0">No Minimum</option>
-          <option value="20000">$20,000</option>
-          <option value="30000">$30,000</option>
-          <option value="40000">$40,000</option>
-          <option value="50000">$50,000</option>
-          <option value="60000">$60,000</option>
-          <option value="75000">$75,000</option>
-          <option value="100000">$100,000</option>
-          <option value="125000">$125,000</option>
-          <option value="150000">$150,000</option>
-          <option value="175000">$175,000</option>
-          <option value="200000">$200,000</option>
-          <option value="250000">$250,000</option>
-          <option value="300000">$300,000</option>
-          <option value="400000">$400,000</option>
-          <option value="500000">$500,000+</option>
+          <option value="150000">₦150,000+</option>
+          <option value="500000">₦500,000+</option>
+          <option value="1200000">₦1,200,000+</option>
+          <option value="5000000">₦5,000,000+</option>
+          <option value="12000000">₦12,000,000+</option>
+          <option value="25000000">₦25,000,000+</option>
+          <option value="50000000">₦50,000,000+</option>
+          <option value="100000000">₦100,000,000+</option>
         </select>
       </div>
     </div>
@@ -384,15 +376,29 @@
     <!-- Ethnicity -->
     <div class="card">
       <div class="card-label">Ethnicity</div>
-      <div class="ethnicity-grid">
-        <button class="eth-btn active" data-race="any" onclick="setRace('any')">Any</button>
-        <button class="eth-btn" data-race="white" onclick="setRace('white')">White</button>
-        <button class="eth-btn" data-race="hispanic" onclick="setRace('hispanic')">Hispanic / Latino</button>
-        <button class="eth-btn" data-race="black" onclick="setRace('black')">Black / African American</button>
-        <button class="eth-btn" data-race="asian" onclick="setRace('asian')">Asian</button>
-        <button class="eth-btn" data-race="other" onclick="setRace('other')">Other</button>
+      <div class="ethnicity-grid" id="ethnicity-grid">
+        <button class="eth-btn" data-ethnicity="any" onclick="setEthnicity('any')">ANY</button>
+        <button class="eth-btn" data-ethnicity="hausa" onclick="setEthnicity('hausa')">HAUSA</button>
+        <button class="eth-btn" data-ethnicity="yoruba" onclick="setEthnicity('yoruba')">YORUBA</button>
+        <button class="eth-btn" data-ethnicity="igbo" onclick="setEthnicity('igbo')">IGBO</button>
+        <button class="eth-btn" data-ethnicity="fulani" onclick="setEthnicity('fulani')">FULANI</button>
+        <button class="eth-btn" data-ethnicity="ijaw" onclick="setEthnicity('ijaw')">IJAW</button>
+        <button class="eth-btn" data-ethnicity="kanuri" onclick="setEthnicity('kanuri')">KANURI</button>
+        <button class="eth-btn" data-ethnicity="ibibio" onclick="setEthnicity('ibibio')">IBIBIO</button>
+        <button class="eth-btn" data-ethnicity="tiv" onclick="setEthnicity('tiv')">TIV</button>
+        <button class="eth-btn" data-ethnicity="other" onclick="setEthnicity('other')">OTHER</button>
       </div>
     </div>
+
+    <style>
+      /* Ethnicity Buttons - ensure they are styled correctly */
+      .ethnicity-grid {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr); /* Adjust as needed for layout */
+        gap: 8px;
+      }
+      /* eth-btn styles are already defined in the main style block */
+    </style>
 
     <!-- Exclude toggles -->
     <div class="grid-2">
@@ -430,7 +436,7 @@
       <div>
         <div class="result-pct-label">Match Probability</div>
         <div class="result-pct" id="result-pct">—</div>
-        <div class="result-pct-sub" id="result-sub">of the US population meets your criteria</div>
+        <div class="result-pct-sub" id="result-sub">of the population meets your criteria</div>
       </div>
       <div class="result-score-side">
         <div class="result-pct-label">Delusion Score</div>
@@ -470,28 +476,32 @@
 </div><!-- /container -->
 
 <script>
-// ─── DATA ────────────────────────────────────────────────────────────────────
+// ─────────────────────────────────────────────
+// DATA & STATE
+// ─────────────────────────────────────────────
+const AGE_DIST = {
+  18: 2.8, 20: 3.0, 25: 4.2, 30: 4.0, 35: 3.5,
+  40: 3.0, 45: 2.5, 50: 2.0, 55: 1.5, 60: 1.0,
+  65: 0.6, 70: 0.3
+};
 
-const MALE_HEIGHT = {60:1,61:.99,62:.97,63:.93,64:.88,65:.8,66:.7,67:.57,68:.44,69:.32,70:.21,71:.13,72:.075,73:.038,74:.016,75:.006,76:.002,77:.0005};
-const FEMALE_HEIGHT = {56:1,57:.99,58:.97,59:.93,60:.86,61:.76,62:.63,63:.5,64:.37,65:.25,66:.15,67:.08,68:.038,69:.015,70:.005,71:.001};
-
-const MALE_INCOME = [[0,1],[20000,.82],[30000,.68],[40000,.56],[50000,.46],[60000,.37],[70000,.3],[80000,.24],[100000,.18],[125000,.12],[150000,.08],[175000,.055],[200000,.038],[250000,.022],[300000,.013],[400000,.006],[500000,.003]];
-const FEMALE_INCOME = [[0,1],[20000,.72],[30000,.57],[40000,.44],[50000,.34],[60000,.26],[70000,.2],[80000,.15],[100000,.09],[125000,.055],[150000,.032],[175000,.02],[200000,.013],[250000,.007],[300000,.004],[400000,.002],[500000,.001]];
-
-const RACE_FRACS = {any:1,white:.595,hispanic:.185,black:.134,asian:.061,other:.025};
-
-const AGE_DIST = {};
-for(let a=18;a<=70;a++) AGE_DIST[a] = a<=39 ? 0.011 : a<=54 ? 0.01 : a<=64 ? 0.009 : 0.008;
+const ETHNICITY_FRACS = {
+  any: 1, hausa: 0.30, yoruba: 0.21, igbo: 0.18, fulani: 0.06,
+  ijaw: 0.04, kanuri: 0.04, ibibio: 0.03, tiv: 0.025, other: 0.155
+};
 
 const HEIGHT_OPTS_MALE = [
   {l:"5'0\"",v:60},{l:"5'1\"",v:61},{l:"5'2\"",v:62},{l:"5'3\"",v:63},{l:"5'4\"",v:64},
   {l:"5'5\"",v:65},{l:"5'6\"",v:66},{l:"5'7\"",v:67},{l:"5'8\"",v:68},{l:"5'9\"",v:69},
-  {l:"5'10\"",v:70},{l:"5'11\"",v:71},{l:"6'0\"",v:72},{l:"6'1\"",v:73},{l:"6'2\"",v:74},{l:"6'3\"",v:75},{l:"6'4\"",v:76}
+  {l:"5'10\"",v:70},{l:"5'11\"",v:71},{l:"6'0\"",v:72},{l:"6'1\"",v:73},{l:"6'2\"",v:74},
+  {l:"6'3\"",v:75},{l:"6'4\"",v:76},{l:"6'5\"",v:77}
 ];
+
 const HEIGHT_OPTS_FEMALE = [
   {l:"4'8\"",v:56},{l:"4'9\"",v:57},{l:"4'10\"",v:58},{l:"4'11\"",v:59},{l:"5'0\"",v:60},
   {l:"5'1\"",v:61},{l:"5'2\"",v:62},{l:"5'3\"",v:63},{l:"5'4\"",v:64},{l:"5'5\"",v:65},
-  {l:"5'6\"",v:66},{l:"5'7\"",v:67},{l:"5'8\"",v:68},{l:"5'9\"",v:69},{l:"5'10\"",v:70}
+  {l:"5'6\"",v:66},{l:"5'7\"",v:67},{l:"5'8\"",v:68},{l:"5'9\"",v:69},{l:"5'10\"",v:70},
+  {l:"5'11\"",v:71}
 ];
 
 const TIERS = [
@@ -503,12 +513,11 @@ const TIERS = [
   {t:0,   score:5, icon:"💀", label:"Fantasy Mode",    color:"#dc2626", desc:"This person statistically barely exists. You may be waiting a very long time."},
 ];
 
-// ─── STATE ───────────────────────────────────────────────────────────────────
 let gender = "male";
-let race = "any";
-let ageMin = 18, ageMax = 70;
+let ageMin = 18;
+let ageMax = 70;
+let selectedEthnicities = ["any"];
 
-// ─── INIT ────────────────────────────────────────────────────────────────────
 function init() {
   buildHeightSelect();
   updateSliderFill();
@@ -517,39 +526,25 @@ function init() {
 function buildHeightSelect() {
   const sel = document.getElementById("height-select");
   const opts = gender === "male" ? HEIGHT_OPTS_MALE : HEIGHT_OPTS_FEMALE;
-  const prev = sel.value ? parseInt(sel.value) : null;
-  sel.innerHTML = "";
-  opts.forEach(o => {
-    const opt = document.createElement("option");
-    opt.value = o.v;
-    opt.textContent = o.l;
-    sel.appendChild(opt);
-  });
-  if (prev && opts.find(o => o.v === prev)) sel.value = prev;
+  sel.innerHTML = opts.map(o => `<option value="${o.v}">${o.l}</option>`).join("");
 }
 
-// ─── CONTROLS ────────────────────────────────────────────────────────────────
-function setGender(g) {
-  gender = g;
-  document.querySelectorAll(".gender-btn").forEach(b =>
-    b.classList.toggle("active", b.dataset.gender === g)
-  );
-  buildHeightSelect();
-  document.getElementById("result").classList.remove("visible");
-  document.getElementById("empty").style.display = "";
-}
-
-function setRace(r) {
-  race = r;
-  document.querySelectorAll(".eth-btn").forEach(b =>
-    b.classList.toggle("active", b.dataset.race === r)
-  );
+function updateSliderFill() {
+  const min = document.getElementById("range-min");
+  const max = document.getElementById("range-max");
+  const fill = document.getElementById("slider-fill");
+  const p1 = ((min.value - 18) / (70 - 18)) * 100;
+  const p2 = ((max.value - 18) / (70 - 18)) * 100;
+  fill.style.left = p1 + "%";
+  fill.style.width = (p2 - p1) + "%";
 }
 
 function onRangeMin() {
   const min = document.getElementById("range-min");
   const max = document.getElementById("range-max");
-  if (parseInt(min.value) >= parseInt(max.value)) min.value = parseInt(max.value) - 1;
+  if (parseInt(min.value) > parseInt(max.value) - 2) {
+    min.value = parseInt(max.value) - 2;
+  }
   ageMin = parseInt(min.value);
   document.getElementById("age-min-label").textContent = ageMin + " yrs";
   updateSliderFill();
@@ -558,102 +553,230 @@ function onRangeMin() {
 function onRangeMax() {
   const min = document.getElementById("range-min");
   const max = document.getElementById("range-max");
-  if (parseInt(max.value) <= parseInt(min.value)) max.value = parseInt(min.value) + 1;
+  if (parseInt(max.value) < parseInt(min.value) + 2) {
+    max.value = parseInt(min.value) + 2;
+  }
   ageMax = parseInt(max.value);
   document.getElementById("age-max-label").textContent = ageMax + " yrs";
   updateSliderFill();
 }
 
-function updateSliderFill() {
-  const total = 70 - 18;
-  const left = ((ageMin - 18) / total) * 100;
-  const right = 100 - ((ageMax - 18) / total) * 100;
-  document.getElementById("slider-fill").style.left = left + "%";
-  document.getElementById("slider-fill").style.right = right + "%";
+function setGender(g) {
+  gender = g;
+  document.querySelectorAll(".gender-btn").forEach(b => {
+    b.classList.toggle("active", b.dataset.gender === g);
+  });
+  buildHeightSelect();
 }
 
-function onToggle(which) {
-  const checked = document.getElementById("toggle-" + which).checked;
-  document.getElementById(which + "-label").textContent = checked ? "Yes" : "No";
+function onToggle(id) {
+  const checked = document.getElementById("toggle-" + id).checked;
+  document.getElementById(id + "-label").textContent = checked ? "Yes" : "No";
 }
 
-function updateState() {}
+function normalize(value, min, max) {
+  return Math.max(0, Math.min(1, (value - min) / (max - min)));
+}
 
-// ─── CALCULATOR ───────────────────────────────────────────────────────────────
-function interpolateCumulative(table, v) {
-  const keys = Object.keys(table).map(Number).sort((a,b)=>a-b);
-  if (v <= keys[0]) return table[keys[0]];
-  if (v >= keys[keys.length-1]) return table[keys[keys.length-1]];
-  for (let i = 0; i < keys.length-1; i++) {
-    if (v >= keys[i] && v <= keys[i+1]) {
-      const t = (v - keys[i]) / (keys[i+1] - keys[i]);
-      return table[keys[i]] + t * (table[keys[i+1]] - table[keys[i]]);
-    }
+function getHeightScore(height, gender) {
+
+  // Nigerian averages
+  const avg = gender === "male" ? 67 : 63;
+
+  const diff = height - avg;
+
+  // Soft reduction instead of brutal percentile math
+  return Math.max(0.08, 1 - (diff * 0.08));
+}
+
+function getIncomeScore(income, gender) {
+
+  // Nigerian realistic annual income scale
+  let score = 1;
+
+  if (income >= 500000) score *= 0.75;
+  if (income >= 1200000) score *= 0.55;
+  if (income >= 3000000) score *= 0.30;
+  if (income >= 6000000) score *= 0.15;
+  if (income >= 12000000) score *= 0.06;
+  if (income >= 50000000) score *= 0.01;
+
+  // Women statistically earn slightly less on average
+  if (gender === "female") {
+    score *= 0.9;
   }
-  return 1;
-}
 
-function interpolateIncome(brackets, income) {
-  if (income <= 0) return 1;
-  for (let i = 0; i < brackets.length-1; i++) {
-    const [lo, fLo] = brackets[i], [hi, fHi] = brackets[i+1];
-    if (income >= lo && income <= hi) {
-      const t = (income - lo) / (hi - lo);
-      return fLo + t * (fHi - fLo);
-    }
-  }
-  return brackets[brackets.length-1][1];
+  return Math.max(score, 0.005);
 }
 
 function getAgeFraction(min, max) {
   const all = Object.keys(AGE_DIST).map(Number);
-  const total = all.filter(a=>a>=18&&a<=70).reduce((s,a)=>s+AGE_DIST[a],0);
-  const sel = all.filter(a=>a>=min&&a<=max).reduce((s,a)=>s+(AGE_DIST[a]||0),0);
-  return total > 0 ? sel / total : 1;
+  const total = all.reduce((s, a) => s + AGE_DIST[a], 0);
+  const selected = all.filter(a => a >= min && a <= max).reduce((s, a) => s + AGE_DIST[a], 0);
+  return total > 0 ? selected / total : 1;
 }
 
+function setEthnicity(eth) {
+  if (eth === "any") {
+    selectedEthnicities = ["any"];
+  } else {
+    const idxAny = selectedEthnicities.indexOf("any");
+    if (idxAny > -1) selectedEthnicities.splice(idxAny, 1);
+
+    const idx = selectedEthnicities.indexOf(eth);
+    if (idx > -1) {
+      if (selectedEthnicities.length > 1) selectedEthnicities.splice(idx, 1);
+    } else if (selectedEthnicities.length < 3) {
+      selectedEthnicities.push(eth);
+    }
+  }
+  
+  if (selectedEthnicities.length === 0) selectedEthnicities = ["any"];
+
+  document.querySelectorAll(".eth-btn").forEach(btn => {
+    btn.classList.toggle("active", selectedEthnicities.includes(btn.dataset.ethnicity));
+  });
+}
+
+function updateState() {}
+
+function getEthnicityScore(selected) {
+  if (selected.includes("any")) return 1;
+  let total = 0;
+  selected.forEach(eth => {
+    total += ETHNICITY_FRACS[eth] || 0;
+  });
+
+  return Math.min(total, 1);
+}
+
+function getMarriageScore(exclude, gender) {
+
+  if (!exclude) return 1;
+
+  // % estimated unmarried adults
+  return gender === "male"
+    ? 0.48
+    : 0.42;
+}
+
+function getObesityScore(exclude, gender) {
+
+  if (!exclude) return 1;
+
+  // % estimated non-obese
+  return gender === "male"
+    ? 0.90
+    : 0.78;
+}
+
+// ─────────────────────────────────────────────
+// MAIN CALCULATION
+// ─────────────────────────────────────────────
+
 function calculate() {
-  const heightInches = parseInt(document.getElementById("height-select").value);
-  const income = parseInt(document.getElementById("income-select").value);
-  const excludeMarried = document.getElementById("toggle-married").checked;
-  const excludeObese = document.getElementById("toggle-obese").checked;
 
+  const height =
+    parseInt(document.getElementById("height-select").value);
+
+  const income =
+    parseInt(document.getElementById("income-select").value);
+
+  const excludeMarried =
+    document.getElementById("toggle-married").checked;
+
+  const excludeObese =
+    document.getElementById("toggle-obese").checked;
+
+  // Base population fraction
   let p = 1;
+
+  // Apply softer demographic filters
   p *= getAgeFraction(ageMin, ageMax);
-  p *= interpolateCumulative(gender === "male" ? MALE_HEIGHT : FEMALE_HEIGHT, heightInches);
-  p *= interpolateIncome(gender === "male" ? MALE_INCOME : FEMALE_INCOME, income);
-  p *= (RACE_FRACS[race] || 1);
-  if (excludeMarried) p *= (gender === "male" ? 0.505 : 0.525);
-  if (excludeObese)   p *= (gender === "male" ? 0.567 : 0.584);
-  p = Math.max(0, Math.min(1, p));
 
-  const tier = TIERS.find(t => p >= t.t) || TIERS[TIERS.length-1];
+  p *= getHeightScore(height, gender);
 
-  const pct = p < 0.001 ? (p*100).toFixed(3) : p < 0.01 ? (p*100).toFixed(2) : (p*100).toFixed(1);
+  p *= getIncomeScore(income, gender);
 
-  // Update result panel
+  p *= getEthnicityScore(selectedEthnicities);
+
+  p *= getMarriageScore(excludeMarried, gender);
+
+  p *= getObesityScore(excludeObese, gender);
+
+  // Clamp
+  p = Math.max(0.0001, Math.min(1, p));
+
+  // Population estimate
+  const nigeriaAdults = 110000000;
+
+  const estimatedPopulation =
+    Math.round(nigeriaAdults * p);
+
+  // Tier detection
+  const tier =
+    TIERS.find(t => p >= t.t)
+    || TIERS[TIERS.length - 1];
+
+  // Percentage formatting
+  let pct;
+
+  if (p < 0.001) {
+    pct = (p * 100).toFixed(3);
+  } else if (p < 0.01) {
+    pct = (p * 100).toFixed(2);
+  } else {
+    pct = (p * 100).toFixed(1);
+  }
+
+  // ───────────────── UI ─────────────────
+
   const resultEl = document.getElementById("result");
-  resultEl.style.borderColor = tier.color + "40";
 
-  document.getElementById("result-pct").textContent = pct + "%";
-  document.getElementById("result-pct").style.color = tier.color;
+  resultEl.style.borderColor =
+    tier.color + "40";
+
+  document.getElementById("result-pct").textContent =
+    pct + "%";
+
+  document.getElementById("result-pct").style.color =
+    tier.color;
+
   document.getElementById("result-sub").textContent =
-    "of the " + (gender === "male" ? "male" : "female") + " population meets your criteria";
-  document.getElementById("result-icon").textContent = tier.icon;
-  document.getElementById("result-name").textContent = tier.label;
-  document.getElementById("result-name").style.color = tier.color;
-  document.getElementById("result-desc").textContent = tier.desc;
-  document.getElementById("result-footer").textContent =
-    "Data sourced from Census Bureau. All figures represent the adult population ages " +
-    ageMin + "–" + ageMax + ". This is a statistical exercise, not a judgment.";
+    `Approximately ${estimatedPopulation.toLocaleString()} Nigerian ${gender}s match your preferences`;
 
+  document.getElementById("result-icon").textContent =
+    tier.icon;
+
+  document.getElementById("result-name").textContent =
+    tier.label;
+
+  document.getElementById("result-name").style.color =
+    tier.color;
+
+  document.getElementById("result-desc").textContent =
+    tier.desc;
+
+  document.getElementById("result-footer").textContent =
+    `Estimate based on broad Nigerian demographic trends for adults ages ${ageMin}–${ageMax}.`;
+
+  // Score bars
   for (let i = 0; i < 5; i++) {
+
     document.getElementById("seg" + i).style.background =
-      i < tier.score ? tier.color : "rgba(255,255,255,0.08)";
+      i < tier.score
+        ? tier.color
+        : "rgba(255,255,255,0.08)";
   }
 
   resultEl.classList.add("visible");
+
   document.getElementById("empty").style.display = "none";
+
+  resultEl.scrollIntoView({
+    behavior: "smooth",
+    block: "nearest"
+  });
 }
 
 init();
